@@ -1,0 +1,264 @@
+README
+======
+
+COFAS ('Composition of Foods Analysis Software') (v1.0 Alpha Test)
+Copyright (C) 2019 Temporality Ltd.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+About COFAS
+-----------
+
+COFAS stands for 'Composition of Foods Analysis Software'.
+
+COFAS allows the nutritional content of different diet or food choices to be 
+compared and analysed, using data published by the UK Government.
+
+This data comes in two parts:
+
+a) a dataset with nutrient content of UK foodstuffs (CoFID) 
+b) the UK governments dietary recommendations.
+
+Cofas is licenced under the GNU Affero General Public License V3.
+
+The Software
+------------
+
+The software is a PHP 7.2 web application with a prebuilt MySQL database 
+containing the nutrient content dataset and the requirements data. 
+
+Data for Nutritional Content of Foods
+-------------------------------------
+
+CoFID (Composition of foods integrated dataset) is published by the 
+UK Government. It is also known as "McCance and Widdowson". It is concerned 
+with the nutrient content of the UK food supply and provides detailed 
+nutritional information on thousands of foods. 
+
+The original data and supporting documentation can be found at 
+https://www.gov.uk/government/
+publications/composition-of-foods-integrated-dataset-cofid.
+
+CoFID is licensed under the Open Government Licence v3.0, which can be found at
+http://www.nationalarchives.gov.uk/doc/open-government-licence/.
+
+Data for Nutritional Requirements
+---------------------------------
+
+The nutritional requirements data is based on the UK Government's published 
+Dietary Recommendations. 
+
+It can be found at 
+https://www.gov.uk/government/uploads/system/uploads/attachment_data/
+file/618167/government_dietary_recommendations.pdf.
+
+This document should be consulted as it contains important additional 
+information regarding the use of these recommendations.
+
+Only requirements data regarding people categorised under 'Males aged 19 - 64'
+is currently implemented. Please refer to UK Government's published 
+Dietary Recommendations document (link above) for the data applicable 
+to other categories.
+
+Installation
+------------
+
+The software has been tested on the following stack:
+
+ Linux (Ubuntu 18.04.2),
+ Php ver 7.2
+ MySQL ver 5.7.25
+ Apache ver 2.4.29.
+
+1) Get a directory for the application on the web server and 
+   create 3 subdirectories:
+
+   ui/
+   lib/ 
+   env/
+
+2) Copy the *.php files from the release to the matching ui/ lib/ and env/ 
+   on the server.
+
+3) Create the database by on the MySQL server running or 
+   importing the file cofas.sql.
+
+4) Edit the env.php file:
+  
+   Edit the application's file system directory (ROOT_DIR) and 
+   application base url (ROOT_URL) settings. The default is "/cofas/".
+   
+   Edit the MySQL settings DB_HOST, DB_USERNAME, DB_USERPW, DB_DATABASENAME
+
+5) Point the browser to http://<ROOT_URL>/ui/login.php
+
+
+Software Directory Structure
+----------------------------
+
+/ui           contains the *.php web pages that comprise the application 
+              (including login.php) and additional *func.php files that hold 
+              extra functions for the matching *.php file
+
+/lib          shared php utility functions used by the php files in /ui 
+
+/log          log files (if active)
+
+/env          environment settings files containing site specific, 
+              local system configurations 
+
+
+Important Files
+---------------
+
+/env/env.php     contains server settings: directory and file paths, urls,
+                 database logins, logging and debugging options 
+
+/lib/cofas.php   single include file for all of the files in lib/ with settings 
+                 for login/session management and defines for string constants.
+
+/ui/login.php    login page for the application
+
+/ui/about.php    information page containing links to licences, contact details
+
+/ui/help.php     help and links page
+
+/ui/page.php     provides unified header, menu and footer.
+
+
+Database Tables
+---------------
+
+cofid_*           raw data from CoFID
+
+users             user names, email and passwords
+
+requirements      recommended nutrient intake data
+
+combination       names of food lists as created by users
+combinationitems  food items and amounts for food lists as entered by users
+
+foods             basic data for each food extracted from raw CoFID data
+factors           nutrient data for each food extracted from raw CoFID data
+
+elements          list of nutrients that are to be tracked
+
+
+Database Schema and Keys
+------------------------
+
+Table             Primary Key    Foreign Keys
+
+elements          elementid             
+foods             foodid
+users             userid
+
+factors           factorid       foodid, elementid      
+
+combination       combid         userid                 
+combinationitems  combitemid     combinationid, foodid  
+
+requirements      reqid          elementid              
+
+
+Logging
+-------
+
+No logging is not active by default. The log may be shown a) in the browser or 
+b) written to a server file. 
+
+a) To activate browser logging:
+
+edit env.php and set LOG_ECHO to TRUE. On each round trip to the server the 
+latest log entries are shown in the browser (in the page footer). 
+
+To active file logging: 
+
+1) create a log/ directory in the ROOT_DIR, then create an empty err.log file
+   in it. Ensure the file has write permissions.
+2) set LOG_FILE to TRUE in env.php 
+
+If a different log file location is required change the setting LOG_FILE_NAME.
+
+Database logging can be managed usign these functions:
+
+dbloggingon()       set db logging on
+dbloggingoff()      set db logging off
+isdbloggingon()     returns TRUE if db logging is on otherwise FALSE
+
+
+Debugging
+---------
+
+All debugging is switched off by default.
+
+The following debug flags may be enabled by setting the value to TRUE:
+
+Name                  Location     Function
+
+
+SHOW_DEBUG            env.php      show POST and COOKIE in footer
+
+SHOW_FOOD_CODES       env.php      show database id with food code
+SHOW_NUTRIENT_CODES   env.php      show database id with nutrient code
+SHOW_GROUP_CODES      env.php      show database id with group code
+
+
+Error Trapping
+--------------
+
+The HALT_ON_ERROR setting in lib error.php is normally TRUE. This means that
+all errors cause the application to exit. For some kinds of testing/debugging
+purposes it may be necessary to continue after an error has occurred. To enable
+this set HALT_ON_ERROR to FALSE. This should not be used in a live environment.
+
+Editing the Requirements table
+------------------------------
+
+It is possible to edit the requirements table:
+
+id            autogenerated
+name          name of requirement
+elementname   matching element name
+elementid     matching element id
+authority     the source of the requirement data eg UK GOV
+measurement   type of requirement data e.g. RDI, EAR
+application   category of people the data applies to
+value         amount of requirement
+units         units for value field
+
+To change the requirements that the software uses, search the code for calls to
+getrequirements and change the values of the parameters authority, measurement and application to match the requirements table entries.
+
+
+Editing the Elements table
+--------------------------
+
+There are many nutrients in the database so the element table lists a subset of
+those that are relevant. To change the list of elements that the software will display edit the elements table:
+
+id                auto generated
+name              name of nutrient (matches raw CoFID data headings)
+code              internal code, same as id
+description       name of nutrient or other descriptive text
+defaultunits      set from data, check it matches with requirements units
+active            set to Y
+
+
+Other information
+-----------------
+
+Please see the about or help pages for additional information.
+
+For any queries please email cofas@temporality.co.uk.
